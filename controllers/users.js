@@ -1,24 +1,33 @@
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const User = require('../models/user');
+const BadRequestError = require('../errors/BadRequestError');
+const NotFoundError = require('../errors/NotFoundError');
+const ConflictError = require('../errors/ConflictError');
+const UnauthorizedError = require('../errors/UnauthorizedError');
 
-module.exports.getUsers = (req, res) => {
+module.exports.getUsers = (req, res, next) => {
   User.find({})
     .then((users) => res.send({ data: users }))
-    .catch((err) => res.status(404).send({ message: `Пользователи не найдены: ${err.message}` }));
+    .catch(next);
 };
 
-module.exports.getCurrentUser = (req, res) => {
+module.exports.getCurrentUser = (req, res, next) => {
   User.findById(req.params.userId)
-    .orFail(new Error('NotValidId'))
+    .orFail()
+    .catch(() => {
+      throw new NotFoundError('Нет пользователя с таким id');
+    })
     .then((user) => res.send({ data: user }))
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        res.status(400).send({ message: 'Переданы некорректные данные' });
-      } else if (err.message === 'NotValidId') {
-        res.status(404).send({ message: 'Пользователь не найден' });
-      } else {
-        res.status(500).send({ message: 'Произошла ошибка' });
-      }
-    });
+    .catch(next);
+};
+
+module.exports.getUserMe = (req, res, next) => {
+  User.findById(req.user._id)
+    .then((user) => {
+      res.send({ user });
+    })
+    .catch(next);
 };
 
 module.exports.patchUser = (req, res) => {
@@ -28,7 +37,7 @@ module.exports.patchUser = (req, res) => {
     { new: true, runValidators: true },
   )
     .then((user) => res.send({ data: user }))
-    .catch((err) => res.status(400).send({ message: `Пользователь не обновлен. Введены некоректные данные: ${err.message}` }));
+    .catch((err) => new BadRequestError(`Пользователь не обновлен. Введены некоректные данные: ${err.message}`));
 };
 
 module.exports.patchAvatarUser = (req, res) => {
@@ -38,13 +47,45 @@ module.exports.patchAvatarUser = (req, res) => {
     { new: true, runValidators: true },
   )
     .then((user) => res.send({ data: user }))
-    .catch((err) => res.status(400).send({ message: `Аватар не обновлен. Введены некоректные данные: ${err.message}` }));
+    .catch((err) => new BadRequestError(`Аватар не обновлен. Введены некоректные данные: ${err.message}`));
 };
 
-module.exports.createUser = (req, res) => {
-  const { name, about, avatar } = req.body;
+module.exports.createUser = (req, res, next) => {
+  const {
+    name, about, avatar, email,
+  } = req.body;
+  bcrypt
+    .hash(req.body.password, 10)
+    .then((hash) => User.create({
+      name, about, avatar, email, password: hash,
+    }))
+    .then(() => res.send({
+      data: {
+        name, about, avatar, email,
+      },
+    }))
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        next(new BadRequestError(`Ошибка: Переданы некорректные данные при создании пользователя - ${err}`));
+      } else if (err.name === 'MongoServerError') {
+        next(new ConflictError('Ошибка: Пользователь с такой почтой уже зарегистрирован'));
+      } else {
+        next(err);
+      }
+    });
+};
 
-  User.create({ name, about, avatar })
-    .then((user) => res.send({ data: user }))
-    .catch((err) => res.status(400).send({ message: `Пользователь не создан. Введены некоректные данные: ${err.message}` }));
+module.exports.login = (req, res, next) => {
+  const {
+    email, password,
+  } = req.body;
+
+  return User.findUserByCredentials(email, password)
+    .then((user) => {
+      const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
+      res.send({ token });
+    })
+    .catch((err) => {
+      next(new UnauthorizedError(err.message));
+    });
 };
