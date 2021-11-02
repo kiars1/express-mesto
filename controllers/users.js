@@ -32,7 +32,7 @@ module.exports.getUserMe = (req, res, next) => {
 
 module.exports.patchUser = (req, res) => {
   User.findByIdAndUpdate(
-    req.user.userId,
+    req.user._id,
     { name: req.body.name, about: req.body.about },
     { new: true, runValidators: true },
   )
@@ -42,7 +42,7 @@ module.exports.patchUser = (req, res) => {
 
 module.exports.patchAvatarUser = (req, res) => {
   User.findByIdAndUpdate(
-    req.user.userId,
+    req.user._id,
     { avatar: req.body.avatar },
     { new: true, runValidators: true },
   )

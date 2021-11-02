@@ -40,38 +40,40 @@ module.exports.deleteCard = (req, res, next) => {
     .catch(next);
 };
 
-module.exports.likeCard = (req, res) => {
+module.exports.likeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
-    { $addToSet: { likes: req.user.userId } },
+    { $addToSet: { likes: req.user._id } },
     { new: true },
   )
-    .orFail(new Error('NotValidId'))
+    .orFail(new Error('IncorrectCardID'))
+    .then((card) => res.send(card))
     .catch((err) => {
       if (err.name === 'CastError') {
-        throw new BadRequestError('Переданы некорректные данные');
-      } else if (err.message === 'NotValidId') {
-        throw new NotFoundError('Пользователь не найден');
+        next(new BadRequestError('Переданы некорректные данные для постановки лайка.'));
+      } else if (err.message === 'IncorrectCardID') {
+        next(new NotFoundError('Карточка с указанным _id не найдена.'));
       } else {
-        res.status(500).send({ message: 'Произошла ошибка' });
+        next(err);
       }
     });
 };
 
-module.exports.dislikeCard = (req, res) => {
+module.exports.dislikeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
-    { $pull: { likes: req.user.userId } },
+    { $pull: { likes: req.user._id } },
     { new: true },
   )
-    .orFail(new Error('NotValidId'))
+    .orFail(new Error('IncorrectCardID'))
+    .then((card) => res.send(card))
     .catch((err) => {
       if (err.name === 'CastError') {
-        throw new BadRequestError('Переданы некорректные данные');
-      } else if (err.message === 'NotValidId') {
-        throw new NotFoundError('Пользователь не найден');
+        next(new BadRequestError('Переданы некорректные данные для снятия лайка.'));
+      } else if (err.message === 'IncorrectCardID') {
+        next(new NotFoundError('Карточка с указанным _id не найдена.'));
       } else {
-        res.status(500).send({ message: 'Произошла ошибка' });
+        next(err);
       }
     });
 };
