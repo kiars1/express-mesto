@@ -47,7 +47,7 @@ app.use('*', (req, res, next) => next(new NotFoundError('Запрашиваем�
 app.use(errors());
 
 app.use((err, req, res, next) => {
-  const status = err.statusCode || 500;
+  const status = err.status || 500;
   const { message } = err;
   res.status(status).json({ err: message || 'На сервере произошла ошибка' });
   return next();

@@ -20,10 +20,8 @@ module.exports.createCard = (req, res, next) => {
 };
 
 module.exports.deleteCard = (req, res, next) => {
-  Card.findById(req.params.cardId);
-
-  Card.deleteOne({ _id: req.params.cardId })
-    .orFail(new Error('NotValidId'))
+  Card.findById(req.params.cardId)
+    .orFail()
     .catch(() => {
       throw new NotFoundError('Нет карточки с таким id');
     })
@@ -31,7 +29,7 @@ module.exports.deleteCard = (req, res, next) => {
       if (card.owner.toString() !== req.user._id) {
         throw new ForbiddenError('Недостаточно прав для выполнения операции');
       }
-      Card.findByIdAndDelete(req.params._id)
+      Card.findByIdAndDelete(req.params.cardId)
         .then((cardData) => {
           res.send({ data: cardData });
         })

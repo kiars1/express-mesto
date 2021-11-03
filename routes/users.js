@@ -8,13 +8,13 @@ const regExp = require('../regexp/regexp');
 
 router.get('/', getUsers);
 
+router.get('/me', getUserMe);
+
 router.get('/:userId', celebrate({
   params: Joi.object().keys({
-    id: Joi.string().alphanum().length(24).hex(),
+    userId: Joi.string().length(24).hex(),
   }),
 }), getCurrentUser);
-
-router.get('/me', getUserMe);
 
 router.patch('/me', celebrate({
   body: Joi.object().keys({
