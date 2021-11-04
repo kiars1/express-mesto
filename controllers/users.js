@@ -66,7 +66,7 @@ module.exports.createUser = (req, res, next) => {
     }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        next(new BadRequestError(`Ошибка: Переданы некорректные данные при создании пользователя - ${err}`));
+        next(new BadRequestError('Ошибка: Переданы некорректные данные при создании пользователя'));
       } else if (err.name === 'MongoServerError') {
         next(new ConflictError('Ошибка: Пользователь с такой почтой уже зарегистрирован'));
       } else {

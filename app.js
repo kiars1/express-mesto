@@ -49,7 +49,7 @@ app.use(errors());
 app.use((err, req, res, next) => {
   const status = err.status || 500;
   const { message } = err;
-  res.status(status).json({ err: message || 'На сервере произошла ошибка' });
+  res.status(status).json(message || 'На сервере произошла ошибка');
   return next();
 });
 
