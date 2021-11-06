@@ -13,6 +13,15 @@ require('dotenv').config();
 const { PORT = 3000 } = process.env;
 const app = express();
 
+app.use(helmet());
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+mongoose.connect('mongodb://localhost:27017/mestodb', {
+  useNewUrlParser: true,
+});
+
 const allowedCors = [
   'localhost:3000',
   'http://mesto.kiars1.nomoredomains.work/',
@@ -35,15 +44,6 @@ app.use((req, res, next) => {
   }
 
   return next();
-});
-
-app.use(helmet());
-
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-
-mongoose.connect('mongodb://localhost:27017/mestodb', {
-  useNewUrlParser: true,
 });
 
 app.use(requestLogger);
