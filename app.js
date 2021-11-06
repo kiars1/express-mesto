@@ -14,9 +14,9 @@ const { PORT = 3000 } = process.env;
 const app = express();
 
 const allowedCors = [
-  'http://localhost:3000',
+  'localhost:3000',
   'http://mesto.kiars1.nomoredomains.work/',
-];
+  'https://mesto.kiars1.nomoredomains.work/'];
 
 app.use((req, res, next) => {
   const { origin } = req.headers;
