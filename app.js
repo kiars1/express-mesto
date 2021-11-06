@@ -1,4 +1,3 @@
-const cors = require('cors');
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
@@ -12,6 +11,12 @@ const { requestLogger, errorLogger } = require('./middlewares/logger');
 require('dotenv').config();
 
 const { PORT = 3000 } = process.env;
+
+const allowedCors = [
+  'http://localhost:3000',
+  'http://mesto.kiars1.nomoredomains.work',
+];
+
 const app = express();
 
 app.use(helmet());
@@ -23,20 +28,24 @@ mongoose.connect('mongodb://localhost:27017/mestodb', {
   useNewUrlParser: true,
 });
 
-const options = {
-  origin: [
-    'http://localhost:3000',
-    'http://mesto.kiars1.nomoredomains.work',
-    'https://mesto.kiars1.nomoredomains.work/',
-  ],
-  methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
-  preflightContinue: false,
-  optionsSuccessStatus: 204,
-  allowedHeaders: ['Content-Type', 'origin', 'Authorization'],
-  credentials: true,
-};
+app.use((req, res, next) => {
+  const { origin } = req.headers;
+  const { method } = req;
+  const requestHeaders = req.headers['access-control-request-headers'];
+  const DEFAULT_ALLOWED_METHODS = 'GET, HEAD, PUT, PATCH, POST, DELETE';
 
-app.use('*', cors(options));
+  if (allowedCors.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+
+  if (method === 'OPTIONS') {
+    res.header('Access-Control-Allow-Methods', DEFAULT_ALLOWED_METHODS);
+    res.header('Access-Control-Allow-Headers', requestHeaders);
+    return res.end();
+  }
+
+  return next();
+});
 
 app.use(requestLogger);
 
