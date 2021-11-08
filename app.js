@@ -34,9 +34,9 @@ const limiter = rateLimit({
   message: 'Слишком много запросов с вашего IP, попробуйте повторить попытку позже',
 });
 
-app.use(limiter);
-
 app.use(requestLogger);
+
+app.use(limiter);
 
 app.get('/crash-test', () => {
   setTimeout(() => {
