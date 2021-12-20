@@ -17,21 +17,7 @@ const { PORT = 3000 } = process.env;
 
 const app = express();
 
-const options = {
-  origin: [
-    'http://localhost:3000',
-    'https://mesto.kiars1.nomoredomains.work/',
-    'http://mesto.kiars1.nomoredomains.work/',
-  ],
-  methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
-  preflightContinue: false,
-  optionsSuccessStatus: 204,
-  allowedHeaders: ['Content-Type', 'origin', 'Authorization'],
-  credentials: true,
-};
-
-
-app.use('*', cors(options));
+app.use(cors());
 
 app.use(helmet());
 
